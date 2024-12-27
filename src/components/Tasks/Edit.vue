@@ -117,7 +117,7 @@ let props = defineProps(['id'])
 const taskStore = useTaskStore()
 let task = ref({});
 let loading = ref(true);
-let formData = reactive({
+let formData = reactive({ //default form data values before calling API
   id: '',
   title: '',
   priority: '',
@@ -128,11 +128,11 @@ onMounted(() => {
 });
 const fetchTask = async (taskId) => {
   try {
-    loading.value = true;
-    const response = await axios.get(env.getApiUrl(`tasks/${taskId}`))
+    loading.value = true; //to show Loading until API's response
+    const response = await axios.get(env.getApiUrl(`tasks/${taskId}`)) //calling the API
     task.value = response.data
     loading.value = false;
-    Object.assign(formData, {
+    Object.assign(formData, { //setting form data object to show previous values in form
       id: task.value.id,
       title: task.value.title,
       priority: task.value.priority,
@@ -142,13 +142,10 @@ const fetchTask = async (taskId) => {
     console.error('Error fetching tasks:', err)
   }
 }
-// Form data state
-
-console.log("formData", formData);
 
 
 // Form state
-const errors = reactive({});
+let errors = reactive({});
 const isUpdating = ref(false);
 const successMessage = ref('');
 
@@ -159,7 +156,9 @@ const minDate = computed(() => {
 
 // Form validation
 const validateForm = () => {
-  errors.value = {};
+  errors.title = '';
+  errors.priority = '';
+  errors.due_date = '';
   let isValid = true;
 
   // Title validation
@@ -179,10 +178,9 @@ const validateForm = () => {
     errors.due_date = 'Due date is required';
     isValid = false;
   } else {
-    const selectedDate = new Date(formData.due_date);
+    const selectedDate = new Date(`${formData.due_date}T00:00:00`);
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
+    today.setHours(0, 0, 0, 0); // Normalize today to midnight
     if (selectedDate < today) {
       errors.due_date = 'Due date cannot be in the past';
       isValid = false;
@@ -214,14 +212,13 @@ const submitTask = async () => {
     // Show success message
     successMessage.value = 'Task updated successfully!';
     setTimeout(() => {
-      router.push({name: 'tasks'});
-
+      router.push({name: 'tasks'}); //redirecting to main task list page
     }, 1000)
-    // Emit event to parent
-    emit('task-created');
   } catch (error) {
     if (error.response?.data?.errors) {
-      Object.assign(errors, error.response.data.errors);
+      Object.entries( error.response.data.errors).forEach(([index, value]) => {
+        errors[index] = value[0];
+      });
     } else {
       errors.general = 'An error occurred while creating the task';
       console.log(error)

@@ -1,4 +1,4 @@
-# taskManagmentApp
+# Task Management App
 
 
 ## Project Setup

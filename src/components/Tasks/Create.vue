@@ -131,7 +131,10 @@ const minDate = computed(() => {
 
 // Form validation
 const validateForm = () => {
-  errors.value = {};
+  //default error values
+  errors.title = '';
+  errors.priority = '';
+  errors.due_date = '';
   let isValid = true;
 
   // Title validation
@@ -151,10 +154,9 @@ const validateForm = () => {
     errors.due_date = 'Due date is required';
     isValid = false;
   } else {
-    const selectedDate = new Date(formData.due_date);
+    const selectedDate = new Date(`${formData.due_date}T00:00:00`); // Add time to ensure local interpretation
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
+    today.setHours(0, 0, 0, 0); // Normalize today to midnight
     if (selectedDate < today) {
       errors.due_date = 'Due date cannot be in the past';
       isValid = false;
@@ -176,7 +178,7 @@ const submitTask = async () => {
   try {
     await taskStore.addTask(formData)  // Add a task
     setTimeout(() => {
-      router.push({name: 'tasks'});
+      router.push({name: 'tasks'}); //redirecting to task list
     }, 1000)
     // Reset form
     Object.assign(formData, {
@@ -192,7 +194,9 @@ const submitTask = async () => {
     emit('task-created');
   } catch (error) {
     if (error.response?.data?.errors) {
-      Object.assign(errors, error.response.data.errors);
+      Object.entries( error.response.data.errors).forEach(([index, value]) => {
+        errors[index] = value[0];
+      });
     } else {
       errors.general = 'An error occurred while creating the task';
       console.log(error)
