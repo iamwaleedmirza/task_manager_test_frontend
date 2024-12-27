@@ -6,8 +6,8 @@
           <div class="card-header">
             <h4 class="mb-0">Update Task</h4>
           </div>
-
-          <div class="card-body">
+          <div v-if="loading">Loading.....</div>
+          <div class="card-body" v-else>
             <!-- Success Alert -->
             <div
                 v-if="successMessage"
@@ -116,25 +116,34 @@ const router = useRouter();
 let props = defineProps(['id'])
 const taskStore = useTaskStore()
 let task = ref({});
-
+let loading = ref(true);
+let formData = reactive({
+  id: '',
+  title: '',
+  priority: '',
+  due_date: ''
+});
 onMounted(() => {
   fetchTask(props.id);
 });
 const fetchTask = async (taskId) => {
   try {
+    loading.value = true;
     const response = await axios.get(env.getApiUrl(`tasks/${taskId}`))
     task.value = response.data
+    loading.value = false;
+    Object.assign(formData, {
+      id: task.value.id,
+      title: task.value.title,
+      priority: task.value.priority,
+      due_date: task.value.due_date
+    });
   } catch (err) {
     console.error('Error fetching tasks:', err)
   }
 }
 // Form data state
-let formData = reactive({
-  id: task.value.id,
-  title: task.value.title,
-  priority: task.value.priority,
-  due_date: task.value.due_date
-});
+
 console.log("formData", formData);
 
 
